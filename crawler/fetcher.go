@@ -51,4 +51,3 @@ var fetcher = fakeFetcher{
 		},
 	},
 }
-

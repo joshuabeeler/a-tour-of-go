@@ -17,6 +17,13 @@ type Impl3 struct {
 	seen map[string]bool		// Collection of URLs we've already crawled.
 }
 
+func GetImpl3() *Impl3 {
+	return &Impl3{
+		seen:      make(map[string]bool),
+		chWorkers: make(chan workerResult, 128),
+	}
+}
+
 // Launch a parallel crawl operation.
 func (c *Impl3) Begin(crawlerDone chan bool, url string, depth int, fetcher Fetcher) {
 	c.fetcher = fetcher
@@ -86,17 +93,4 @@ func (c *Impl3) Crawl(url string, depth int, fetcher Fetcher) {
 	}
 	
 	c.chWorkers <- workerResult{ "", 0, true }
-}
-
-func main() {
-	//Crawl("https://golang.org/", 4, fetcher)
-
-	crawler := Impl3{
-		seen: make(map[string]bool),
-		chWorkers: make(chan workerResult, 128),
-	}
-
-	done := make(chan bool)
-	crawler.Begin(done, "https://golang.org/", 4, fetcher)
-	<- done
 }
