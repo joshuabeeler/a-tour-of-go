@@ -24,6 +24,17 @@ func GetImpl3() *Impl3 {
 	}
 }
 
+func (c *Impl3) GetResults() []string {
+	keys := make([]string, len(c.seen))
+	i := 0
+	for key := range c.seen {
+		keys[i] = key
+		i++
+	}
+
+	return keys
+}
+
 // Launch a parallel crawl operation.
 func (c *Impl3) Begin(crawlerDone chan bool, url string, depth int, fetcher Fetcher) {
 	c.fetcher = fetcher
