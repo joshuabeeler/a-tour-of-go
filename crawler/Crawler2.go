@@ -9,22 +9,22 @@ import (
 // JOSH'S CODE
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-type Crawler2 struct {
+type Impl2 struct {
 	fetcher Fetcher				// We use this to make "web" fetches.
-	chWorkers chan WorkerResult	// The broker receives new URLs from workers via this channel.
+	chWorkers chan workerResult	// The broker receives new URLs from workers via this channel.
 	inFlight int				// Number of workers doing work.
 	seenMux sync.Mutex			// Used to synchronize access to the seen map.
 	seen map[string]bool		// Collection of URLs we've already crawled.
 }
 
-type WorkerResult struct {
+type workerResult struct {
 	url string			// URL to fetch. "" if nothing to fetch.
 	depth int			// Stop fetching when this reaches zero.
 	done bool			// True when a worker is done, false otherwise.
 }
 
 // Launch a parallel crawl operation.
-func (c *Crawler2) Begin(crawlerDone chan bool, url string, depth int, fetcher Fetcher) {
+func (c *Impl2) Begin(crawlerDone chan bool, url string, depth int, fetcher Fetcher) {
 	c.fetcher = fetcher
 	c.Seen(url)
 	c.Launch(url, depth)
@@ -32,7 +32,7 @@ func (c *Crawler2) Begin(crawlerDone chan bool, url string, depth int, fetcher F
 }
 
 // Goroutine that manages all of the workers involved in a parallel crawl operation.
-func (c *Crawler2) Broker(crawlerDone chan bool) {
+func (c *Impl2) Broker(crawlerDone chan bool) {
 	//fmt.Println("broker launch")
 	
 	for ; c.inFlight > 0; {
@@ -55,7 +55,7 @@ func (c *Crawler2) Broker(crawlerDone chan bool) {
 }
 
 // Check if a URL has been seen before (and add it to the seen map if it hasn't been) and return the result.
-func (c *Crawle2) Seen(url string) bool {
+func (c *Impl2) Seen(url string) bool {
 	c.seenMux.Lock()
 	_, ok := c.seen[url]
 	if !ok {
@@ -66,20 +66,20 @@ func (c *Crawle2) Seen(url string) bool {
 }
 
 // Start a new sub-crawl at a given URL.
-func (c *Crawler2) Launch(url string, depth int) {
+func (c *Impl2) Launch(url string, depth int) {
 	c.inFlight = c.inFlight + 1
 	//fmt.Printf("worker launch: %s\n", req.url)
 	go c.Crawl(url, depth, c.fetcher)
 }
 
 // Fetch a URL and issue sub-crawl requests for all of the URLs children.
-func (c *Crawler2) Crawl(url string, depth int, fetcher Fetcher) {
+func (c *Impl2) Crawl(url string, depth int, fetcher Fetcher) {
 	//fmt.Println("crawling")
 	
 	body, urls, err := fetcher.Fetch(url)
 	if err != nil {
 		fmt.Println(err)
-		c.chWorkers <- WorkerResult{ "", 0, true }
+		c.chWorkers <- workerResult{ "", 0, true }
 		return
 	}
 	
@@ -87,19 +87,19 @@ func (c *Crawler2) Crawl(url string, depth int, fetcher Fetcher) {
 	for _, u := range urls {
 		if !c.Seen(u) {
 			//fmt.Printf("adding: %s\n", u)
-			c.chWorkers <- WorkerResult{ u, depth - 1, false }
+			c.chWorkers <- workerResult{ u, depth - 1, false }
 		}
 	}
 	
-	c.chWorkers <- WorkerResult{ "", 0, true }
+	c.chWorkers <- workerResult{ "", 0, true }
 }
 
 func main() {
 	//Crawl("https://golang.org/", 4, fetcher)
 
-	crawler = Crawler2{
+	crawler := Impl2{
 		seen: make(map[string]bool),
-		chWorkers: make(chan WorkerResult, 128),	// why is , needed here?
+		chWorkers: make(chan workerResult, 128),	// why is , needed here?
 	}
 
 	done := make(chan bool)
