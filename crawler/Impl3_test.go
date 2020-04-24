@@ -2,11 +2,34 @@ package crawler
 
 import "testing"
 
-func TestImpl3(t *testing.T) {
-	crawler := GetImpl3()
+func TestImpl1(t *testing.T) {
+	c := Impl1{
+		seen: make(map[string]bool),
+		chReq: make(chan request, 128),
+		chDone: make(chan int, 128),	// why is , needed here?
+	}
 
 	done := make(chan bool)
-	crawler.Begin(done, "https://golang.org/", 4, fetcher)
+	c.Begin(done, "https://golang.org/", 4, NewGolangMockFetcher())
+	<- done
+}
+
+func TestImpl2(t *testing.T) {
+	c := Impl2{
+		seen: make(map[string]bool),
+		chWorkers: make(chan workerResult, 128),	// why is , needed here?
+	}
+
+	done := make(chan bool)
+	c.Begin(done, "https://golang.org/", 4, NewGolangMockFetcher())
+	<- done
+}
+
+func TestImpl3(t *testing.T) {
+	crawler := NewImpl3()
+
+	done := make(chan bool)
+	crawler.Begin(done, "https://golang.org/", 4, NewGolangMockFetcher())
 	<- done
 
 	expectedResults := []string{

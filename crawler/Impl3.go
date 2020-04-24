@@ -17,7 +17,7 @@ type Impl3 struct {
 	seen map[string]bool		// Collection of URLs we've already crawled.
 }
 
-func GetImpl3() *Impl3 {
+func NewImpl3() *Impl3 {
 	return &Impl3{
 		seen:      make(map[string]bool),
 		chWorkers: make(chan workerResult, 128),
